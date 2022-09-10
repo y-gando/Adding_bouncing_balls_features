@@ -42,19 +42,28 @@ class Ball extends Shape {
       this.color = color;
       this.size = size;
       // Ballコンストラクターはexistsという新しいプロパティを定義する必要がある。
-      this.exiists = true;
+      this.exists = true;
    }
 
    draw() {
-      ctx.beginPath();
-      ctx.fillStyle = this.color;
-      ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
-      ctx.fill();
+      if (this.exists === true) {
+         // 元気です！
+         ctx.beginPath();
+         ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+         ctx.fillStyle = this.color;
+         ctx.fill();
+      } else if(this.exists !== true) {
+         // 死んじゃった！とき
+         ctx.beginPath();
+         ctx.arc(this.x, this.y, this.size, 0,2 * Math.PI);
+         ctx.strokeStyle = this.color;
+         ctx.stroke();
+      }
    }
 
    collisionDetect() {
       for (const ball of balls) {
-         if (!(this === ball) && ball.exiists) {
+         if (!(this === ball) && ball.exists) {
             const dx = this.x - ball.x;
             const dy = this.y - ball.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -88,12 +97,20 @@ class Ball extends Shape {
    }
 }
 
-
 // 親から継承
 // Shapeを拡張してEvilCircleクラスにする
 class EvilCircle extends Shape {
+   SIZE = 10;
+
+   /**
+    * コンストラクター
+    * @param {number} x - EvilCircle の x座標の値
+    * @param {number} y - EvilCircle の y座標の値
+    */
    constructor(x, y) {
-      super(x, y, 20, 20, 'white', 10);
+      super(x, y, 20, 20);
+      this.color = 'white';
+      this.size = this.SIZE;
    }
 
    draw() {
@@ -101,21 +118,7 @@ class EvilCircle extends Shape {
       ctx.strokeStyle = this.color;
       ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
       ctx.stroke();
-      ctx.arclineWidth(en - US) = 3;
-   }
-
-   collisionDetect() {
-      for (const ball of balls) {
-         // if () {
-            const dx = this.x - ball.x;
-            const dy = this.y - ball.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < this.size + ball.size) {
-               ball.color = this.color = randomRGB();
-            }
-         // }
-      }
+      ctx.lineWidth = 3;
    }
 
    checkBounds() {
@@ -135,6 +138,39 @@ class EvilCircle extends Shape {
          // this.velY = -(this.velY);
       }
    }
+
+
+   // 衝突判定
+   // 衝突した時に食べる処理が行われる
+   collisionDetect() {
+      for (const ball of balls) {
+         // 0.元気と悪の判定方法
+         if (ball.exists === true) {
+            // ここにくる ball のは元気なボールやつだけ
+            // 元気なボールを stroke にしたい！
+
+            // 1.悪と元気がぶつかっているかどうかの判定をする
+            //thisはevilCircleのこと
+            // 悪と元気の距離を求める
+            const dx = this.x - ball.x;
+            const dy = this.y - ball.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            // その距離が悪の半径と元気の半径の大きさより小さい場合ぶつかっている
+            if (distance < this.size + ball.size) {
+               // 悪と元気なボールがぶつかっているとき
+               // 元気なボールを stroke にする！
+               // ctx.beginPath();
+               // ctx.strokeStyle = ball.color;
+               // ctx.arc(ball.x, ball.y, ball.size, 0, 2 * Math.PI);
+               // ctx.stroke();
+               ball.exists = false;
+            }
+         }
+         
+         // 全てのボールがくる
+      }
+   }
+
 }
 
 
@@ -147,16 +183,16 @@ class EvilCircle extends Shape {
 window.addEventListener('keydown', (e) => {
    switch (e.key) {
       case 'a':
-         this.x -= this.velX;
+         badBall.x -= badBall.velX;
          break;
       case 'd':
-         this.x += this.velX;
+         badBall.x += badBall.velX;
          break;
       case 'w':
-         this.y -= this.velY;
+         badBall.y -= badBall.velY;
          break;
       case 's':
-         this.y += this.velY;
+         badBall.y += badBall.velY;
          break;
    }
 });
@@ -180,9 +216,15 @@ while (balls.length < 25) {
    balls.push(ball);
 }
 
+const badBall = new EvilCircle(
+   random(0 + 10, width - 10),
+   random(0 + 10, height - 10)
+);
+
 function loop() {
    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
    ctx.fillRect(0, 0, width, height);
+   badBall.draw();
 
    for (const ball of balls) {
       ball.draw();
@@ -190,7 +232,12 @@ function loop() {
       ball.collisionDetect();
    }
 
+   // badBall.checkBounds();
+   badBall.collisionDetect();
+
    requestAnimationFrame(loop);
 }
 
 loop();
+
+// まず、（必要な引数を指定して）新しい邪悪な円オブジェクトインスタンスを作成
